@@ -1,81 +1,93 @@
-let gameseq=[];
-let userseq=[];
-let btns=["yellow","red","purple","green"];
+var buttonColors = ["red", "green", "yellow", "purple"];
+var gamePattern = [];
+var userClickedPattern = [];
 
-let started = false;
-let level= 0;
+var started = false;
+var level = 0;
 
-let h2= document.querySelector("h3");
-
-
-document.addEventListener("keypress", function(){
-    if(started==false){
-    console.log("game started");
-    started = true;
-
-    levelup();
+// Start the game
+document.addEventListener("keydown", function() {
+    if (!started) {
+        document.querySelector("h1").textContent = "Level " + level;
+        nextSequence();
+        started = true;
     }
 });
 
-function btnflash(btn){
-    btn.classList.add("flash");
-    setTimeout(function(){
-        btn.classList.remove("flash");
-    },250);
-}
+// Detect user clicks
+document.querySelectorAll(".btn").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+        var userChosenColor = this.id;
+        userClickedPattern.push(userChosenColor);
 
-function levelup(){
-    userseq=[];
+        playSound(userChosenColor);
+        animatePress(userChosenColor);
+
+        checkAnswer(userClickedPattern.length - 1);
+    });
+});
+
+// Generate next sequence
+function nextSequence() {
+    userClickedPattern = [];
     level++;
-    h2.innerText=`Level ${level}`;
+    document.querySelector("h1").textContent = "Level " + level;
+    document.getElementById("score").textContent = "Score: " + level;
 
-let randinx=Math.floor(Math.random()*3);
-let randcolor= btns[randinx];
-let randbtn= document.querySelector(`.${randcolor}`);
-gameseq.push(randcolor);
-console.log(randbtn);
-btnflash(randbtn);
+    var randomNumber = Math.floor(Math.random() * 4);
+    var randomChosenColor = buttonColors[randomNumber];
+    gamePattern.push(randomChosenColor);
 
+    animateSequence(randomChosenColor);
+    playSound(randomChosenColor);
 }
 
-function btnpress(){
-    console.log(this);
-    let btn = this;
-    btnflash(btn);
-
-    usercolor=btn.getAttribute("id");
-    userseq.push(usercolor);
-
-    checkans(userseq.length-1);
+// Animate sequence
+function animateSequence(color) {
+    var button = document.getElementById(color);
+    button.classList.add("glow");
+    setTimeout(function() {
+        button.classList.remove("glow");
+    }, 400);
 }
 
-let allbtns= document.querySelectorAll(".btn");
-for(btn of allbtns){
-    btn.addEventListener("click", btnpress);
+// Animate user click
+function animatePress(color) {
+    var button = document.getElementById(color);
+    button.classList.add("pressed");
+    setTimeout(function() {
+        button.classList.remove("pressed");
+    }, 200);
 }
 
+// Play sound
+function playSound(name) {
+    var audio = new Audio("sounds/" + name + ".mp3");
+    audio.play();
+}
 
-function checkans(idx){
-
-
-    if(userseq[idx]===gameseq[idx]){
-        if(userseq.length== gameseq.length){
-           setTimeout( levelup(),1000);
+// Check answer
+function checkAnswer(currentLevel) {
+    if (gamePattern[currentLevel] === userClickedPattern[currentLevel]) {
+        if (userClickedPattern.length === gamePattern.length) {
+            setTimeout(nextSequence, 1000);
         }
-    } else{
-        h2.innerHTML = `<b>GAME OVER</b>!Your score was<b>${level}</b> <br>Press any key to start`;
-       document.querySelector("body").style.backgroundColor= "red";
-       setTimeout(function(){
-        document.querySelector("body").style.backgroundColor="white";
-       },150);
-       reset();
-    }
+    } else {
+        playSound("wrong");
+        document.body.classList.add("game-over");
+        document.querySelector("h1").textContent = "Game Over! Press Any Key to Restart";
+        setTimeout(function() {
+            document.body.classList.remove("game-over");
+        }, 200);
 
+        startOver();
+    }
 }
 
-function reset(){
+// Restart game
+function startOver() {
+    level = 0;
+    gamePattern = [];
     started = false;
-    gameseq = [];
-    userseq = [];
-    level =0;
+    document.getElementById("score").textContent = "Score: 0";
 }
